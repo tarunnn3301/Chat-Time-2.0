@@ -123,32 +123,75 @@ const fetchChats = asyncHandler(async (req, res) => {
   });
   const removeFromGroup = asyncHandler(async (req, res) => {
     const { chatId, userId } = req.body;
-  
     // check if the requester is admin
-  
-    const removed = await Chat.findByIdAndUpdate(
-      chatId,
-      {
-        $pull: { users: userId },
-      },
-      {
-        new: true,
-      }
-    )
-      .populate("users", "-password")
-      .populate("groupAdmin", "-password");
-  
-    if (!removed) {
-      res.status(404);
-      throw new Error("Chat Not Found");
-    } else {
-      res.json(removed);
+    const groupChatExists = await Chat.findOne({ _id: chatId }); // Find if group chat exists.
+
+    if (!groupChatExists) { // Error: No group chat with the given id exists.
+      return res.status(400).json({ error: "Invalid group chat Id." });
     }
+    else if (userId==req.user._id) {
+      const removed = await Chat.findByIdAndUpdate(
+        chatId,
+        {
+          $pull: { users: userId },
+        },
+        {
+          new: true,
+        }
+      )
+        .populate("users", "-password")
+        .populate("groupAdmin", "-password");
+    
+      if (!removed) {
+        res.status(404);
+        throw new Error("Chat Not Found");
+      } else {
+        res.json(removed);
+      }
+    } 
+    
+
+  
+    else if (!groupChatExists.groupAdmin.equals(req.user._id)) { // Error: Requester is not the admin of this group.
+      return res.status(401).json({ error: "Only the admin can remove people from the group." });
+    }
+    else{
+
+      const removed = await Chat.findByIdAndUpdate(
+        chatId,
+        {
+          $pull: { users: userId },
+        },
+        {
+          new: true,
+        }
+      )
+        .populate("users", "-password")
+        .populate("groupAdmin", "-password");
+    
+      if (!removed) {
+        res.status(404);
+        throw new Error("Chat Not Found");
+      } else {
+        res.json(removed);
+      }
+    }
+  
+    
   });
   const addToGroup = asyncHandler(async (req, res) => {
     const { chatId, userId } = req.body;
   
     // check if the requester is admin
+    const groupChatExists = await Chat.findOne({ _id: chatId }); // Find if group chat exists.
+
+  if (!groupChatExists) { // Error: No group chat with the given id exists.
+    return res.status(400).json({ error: "Invalid group chat Id." });
+  }
+
+  if (!groupChatExists.groupAdmin.equals(req.user._id)) { // Error: Requester is not the admin of this group.
+    return res.status(401).json({ error: "Only the admin can add people to the group." });
+  }
   
     const added = await Chat.findByIdAndUpdate(
       chatId,
