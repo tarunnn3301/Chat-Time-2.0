@@ -65,6 +65,16 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
 
   const handleRename = async () => {
     if (!groupChatName) return;
+    if (selectedChat.groupAdmin._id !== user._id) {
+      toast({
+        title: "Only admins can update group name!",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+      return;
+    }
 
     try {
       setRenameLoading(true);
@@ -83,8 +93,8 @@ const UpdateGroupChatModal = ({ fetchMessages, fetchAgain, setFetchAgain }) => {
       );
 
       console.log(data._id);
-      // setSelectedChat("");
       setSelectedChat(data);
+      // user1._id === user._id ? setSelectedChat():setSelectedChat(data);
       setFetchAgain(!fetchAgain);
       setRenameLoading(false);
     } catch (error) {
