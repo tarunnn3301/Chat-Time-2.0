@@ -17,12 +17,11 @@ const Signup = () => {
   const [email, setEmail] = useState();
   const [confirmpassword, setConfirmpassword] = useState();
   const [password, setPassword] = useState();
-//   const [pic, setPic] = useState();
-  const [loading,setLoading]=useState(false);
-
+  const [pic, setPic] = useState();
+  const [picLoading, setPicLoading] = useState(false);
 
   const submitHandler = async () => {
-    setLoading(true);
+    setPicLoading(true);
     if (!name || !email || !password || !confirmpassword) {
       toast({
         title: "Please Fill all the Feilds",
@@ -31,7 +30,7 @@ const Signup = () => {
         isClosable: true,
         position: "bottom",
       });
-      setLoading(false);
+      setPicLoading(false);
       return;
     }
     if (password !== confirmpassword) {
@@ -44,7 +43,7 @@ const Signup = () => {
       });
       return;
     }
-    console.log(name, email, password);
+    console.log(name, email, password, pic);
     try {
       const config = {
         headers: {
@@ -57,7 +56,7 @@ const Signup = () => {
           name,
           email,
           password,
-        //   pic,
+          pic,
         },
         config
       );
@@ -70,9 +69,9 @@ const Signup = () => {
         position: "bottom",
       });
       localStorage.setItem("userInfo", JSON.stringify(data));
-      setLoading(false);
+      setPicLoading(false);
       history.push("/chats");
-      window.location.reload();//important done here
+      window.location.reload();
     } catch (error) {
       toast({
         title: "Error Occured!",
@@ -82,12 +81,55 @@ const Signup = () => {
         isClosable: true,
         position: "bottom",
       });
-      setLoading(false);
+      setPicLoading(false);
     }
   };
 
-//   const postDetails = (pics) => {}
-    
+  const postDetails = (pics) => {
+    setPicLoading(true);
+    if (pics === undefined) {
+      toast({
+        title: "Please Select an Image!",
+        status: "warning",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+      return;
+    }
+    console.log(pics);
+    if (pics.type === "image/jpeg" || pics.type === "image/png") {
+      const data = new FormData();
+      data.append("file", pics);
+      data.append("upload_preset", "chat-time");
+      data.append("cloud_name", "do3psgeor");
+      fetch("https://api.cloudinary.com/v1_1/do3psgeor/image/upload", {
+        method: "post",
+        body: data,
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          setPic(data.url.toString());
+          console.log(data.url.toString());
+          setPicLoading(false);
+        })
+        .catch((err) => {
+          console.log(err);
+          setPicLoading(false);
+        });
+    } else {
+      toast({
+        title: "Please Select an Image!",
+        status: "warning",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom",
+      });
+      setPicLoading(false);
+      return;
+    }
+  };
+
   return (
     <VStack spacing="5px">
       <FormControl id="first-name" isRequired>
@@ -135,11 +177,21 @@ const Signup = () => {
           </InputRightElement>
         </InputGroup>
       </FormControl>
+      <FormControl id="pic">
+        <FormLabel>Upload your Picture</FormLabel>
+        <Input
+          type="file"
+          p={1.5}
+          accept="image/*"
+          onChange={(e) => postDetails(e.target.files[0])}
+        />
+      </FormControl>
       <Button
         colorScheme="blue"
         width="100%"
         style={{ marginTop: 15 }}
         onClick={submitHandler}
+        isLoading={picLoading}
       >
         Sign Up
       </Button>
